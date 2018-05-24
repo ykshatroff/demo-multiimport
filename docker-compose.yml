@@ -1,0 +1,59 @@
+version: "2"
+
+services:
+
+  migrate:
+    extends:
+      file: docker-compose-base.yml
+      service: base
+    command: python manage.py migrate
+
+  loaddata:
+    extends:
+      file: docker-compose-base.yml
+      service: base
+    links:
+      - migrate
+    command: python manage.py loaddata demo/fixtures/initial.json
+
+  createsuperuser:
+    extends:
+      file: docker-compose-base.yml
+      service: base
+    links:
+      - migrate
+    command: python manage.py createsuperuser --username admin --email admin@localhost
+
+  init:
+    extends:
+      file: docker-compose-base.yml
+      service: base
+    links:
+      - loaddata
+    command: echo Initialization complete.
+
+  rss_generator:
+    extends:
+      file: docker-compose-base.yml
+      service: base
+    ports:
+      - "18000:18000"
+    command: python ./demo/rssgenerator/app.py -p 18000
+
+  rss_aggregator:
+    extends:
+      file: docker-compose-base.yml
+      service: base
+    links:
+      - init
+    command: ./manage.py aggregator_worker -i -t 30
+
+  admin:
+    extends:
+      file: docker-compose-base.yml
+      service: base
+    links:
+      - init
+    ports:
+      - "8000:8000"
+    command: python manage.py runserver 0.0.0.0:8000

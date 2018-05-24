@@ -1,0 +1,12 @@
+version: "2"
+
+services:
+
+  base:
+    build: .
+    environment:
+      PYTHONPATH: ".:./lib-demo"
+      DBNAME: db-docker.sqlite3
+      DJANGO_SETTINGS_MODULE: demo.settings
+    volumes:
+      - .:/usr/src/app
